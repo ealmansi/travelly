@@ -7,6 +7,10 @@
     "start": "node index.js",
     "test": "ENV=testing LOG_LEVEL=info DATABASE_LOGGING=true ./node_modules/mocha/bin/mocha --timeout 10000 --recursive test/ unit/"
   },
+  "engines": {
+    "node": "~8.1.4",
+    "npm": "~5.5.1"
+  },
   "keywords": [
     "travelly",
     "friendly",
