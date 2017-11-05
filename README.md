@@ -1,2 +1,2 @@
-# travelly-web
-Travelly - your friendly travel planner
+# Travelly - your friendly travel planner
+
