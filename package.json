@@ -1,0 +1,38 @@
+{
+  "name": "travelly-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "ENV=testing LOG_LEVEL=info DATABASE_LOGGING=true ./node_modules/mocha/bin/mocha --timeout 10000 --recursive test/ unit/"
+  },
+  "keywords": [
+    "travelly",
+    "friendly",
+    "travel",
+    "planner"
+  ],
+  "author": "Emilio Almansi",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "cors": "^2.8.4",
+    "dotenv": "^4.0.0",
+    "express": "^4.16.2",
+    "pg": "^7.4.0",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^4.22.4",
+    "underscore": "^1.8.3",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^4.0.1",
+    "sinon": "^4.1.1",
+    "sqlite3": "^3.1.13",
+    "supertest": "^3.0.0",
+    "supertest-as-promised": "^4.0.2"
+  }
+}
