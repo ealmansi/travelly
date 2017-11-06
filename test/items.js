@@ -24,13 +24,13 @@ describe('CRUD operations on items', () => {
     const testItem = { item: 'some item' }
     return request(app)
       .post('/v1/item')
-      .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
+      .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
       .send(testItem)
       .expect(200)
     .then(() => {
       return request(app)
         .get('/v1/items')
-        .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
+        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
@@ -41,14 +41,14 @@ describe('CRUD operations on items', () => {
     .then(() => {
       return request(app)
         .del('/v1/item')
-        .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
+        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
         .query(testItem)
         .expect(200)
     })
     .then(() => {
       return request(app)
         .get('/v1/items')
-        .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
+        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
