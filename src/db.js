@@ -2,7 +2,9 @@ const config = require('../config')
 const bcrypt = require('bcrypt')
 const Sequelize = require('sequelize')
 
-const databaseUri = config.get('ENV') === 'production'
+const isProductionEnv = config.get('ENV') === 'production' 
+
+const databaseUri = isProductionEnv
   ? config.get('DATABASE_URI')
   : config.get('TEST_DATABASE_URI')
 
@@ -13,27 +15,27 @@ const sequelize = new Sequelize(databaseUri, {
 
 const models = require('./models')(sequelize)
 
-const productionAdmin = {
-  username: config.get('ADMIN_USERNAME'),
-  name: config.get('ADMIN_NAME'),
-  username: config.get('ADMIN_USERNAME'),
-  email: config.get('ADMIN_EMAIL'),
-  passwordHash: bcrypt.hashSync(config.get('ADMIN_PASSWORD'), 10),
-  isAdmin: true
+let admin
+if (isProductionEnv) {
+  admin = {
+    username: config.get('ADMIN_USERNAME'),
+    name: config.get('ADMIN_NAME'),
+    username: config.get('ADMIN_USERNAME'),
+    email: config.get('ADMIN_EMAIL'),
+    passwordHash: bcrypt.hashSync(config.get('ADMIN_PASSWORD'), 10),
+    isAdmin: true
+  }
 }
-
-const testingAdmin = {
-  username: config.get('TEST_ADMIN_USERNAME'),
-  name: config.get('TEST_ADMIN_NAME'),
-  username: config.get('TEST_ADMIN_USERNAME'),
-  email: config.get('TEST_ADMIN_EMAIL'),
-  passwordHash: bcrypt.hashSync(config.get('TEST_ADMIN_PASSWORD'), 10),
-  isAdmin: true
+else {
+  admin = {
+    username: config.get('TEST_ADMIN_USERNAME'),
+    name: config.get('TEST_ADMIN_NAME'),
+    username: config.get('TEST_ADMIN_USERNAME'),
+    email: config.get('TEST_ADMIN_EMAIL'),
+    passwordHash: bcrypt.hashSync(config.get('TEST_ADMIN_PASSWORD'), 10),
+    isAdmin: true
+  }
 }
-
-const admin = config.get('ENV') === 'production'
-  ? productionAdmin
-  : testingAdmin
 
 const initialize = () => {
   return sequelize.sync({ force: false })
