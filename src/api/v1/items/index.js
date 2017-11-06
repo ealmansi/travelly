@@ -7,8 +7,9 @@ module.exports = db => ({
     (req, res) => {
       if (!req.body.item) {
         res.sendStatus(422)
+        return
       }
-      return db.models.ShoppingItem.create({ item: req.body.item })
+      db.models.ShoppingItem.create({ item: req.body.item })
         .then(() => res.sendStatus(200))
         .catch(err => {
           logger.error(err)
@@ -21,8 +22,9 @@ module.exports = db => ({
     (req, res) => {
       if (!req.query.item) {
         res.sendStatus(422)
+        return
       }
-      return db.models.ShoppingItem.destroy({ where: { item: req.query.item } })
+      db.models.ShoppingItem.destroy({ where: { item: req.query.item } })
         .then(() => res.sendStatus(200))
         .catch(err => {
           logger.error(err)
@@ -33,7 +35,7 @@ module.exports = db => ({
   'GET /items': [
     authUtil.isLoggedIn,
     (req, res) => {
-      return db.models.ShoppingItem.findAll()
+      db.models.ShoppingItem.findAll()
         .then(rows => res.send(rows.map(row => row.item)))
         .catch(() => res.sendStatus(500))
     }

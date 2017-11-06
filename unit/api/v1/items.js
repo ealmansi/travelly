@@ -1,3 +1,4 @@
+const util = require('../../util')
 const sinon = require('sinon')
 const chai = require('chai')
 const chaiAsPromised = require("chai-as-promised")
@@ -6,20 +7,15 @@ const expect = chai.expect
 chai.should()
 chai.use(chaiAsPromised)
 
-const getApiHandler = api => route => {
-  const [handler] = api[route].slice(-1)
-  return handler
-}
-
 describe('v1 items route unit tests', function() {
   let db
-  let getHandler
+  let getRequestHandler
   
   beforeEach(function(done) {
     db = require('../../db')
     db.sequelize.sync().then(() => {
       const api = require('../../../src/api/v1')(db)
-      getHandler = getApiHandler(api)
+      getRequestHandler = util.getRequestHandlerFromApi(api)
       done()
     })
   })
@@ -31,33 +27,43 @@ describe('v1 items route unit tests', function() {
     })
   })
 
-  it('post request should fail on invalid input', () => {
+  it('post request should fail on invalid input', done => {
     const req = { body: { } }
-    const res = { sendStatus: sinon.spy() }
-    return getHandler('POST /item')(req, res)
-      .then(() => expect(res.sendStatus.calledWith(422)).to.be.true)
+    const res = {
+      sendStatus: status => {
+        expect(status).to.equal(422)
+        done()
+      }
+    }
+    getRequestHandler('POST /item')(req, res)
   })
 
-  it('post request should fail on database failure', () => {
+  it('post request should fail on database failure', done => {
     const req = { body: { item: 'some item' } }
-    const res = { sendStatus: sinon.spy() }
+    const res = {
+      sendStatus: status => {
+        expect(status).to.equal(500)
+        done()
+      }
+    }
     const create = sinon.stub(db.models.ShoppingItem, "create")
     create.rejects(new Error('Some database error.'))
-    return getHandler('POST /item')(req, res)
-      .then(() => {
-        expect(res.sendStatus.calledWith(500)).to.be.true
-      })
+    getRequestHandler('POST /item')(req, res)
   })
   
-  it('post request should create an item on valid input', () => {
+  it('post request should create an item on valid input', done => {
     const req = { body: { item: 'some item' } }
-    const res = { sendStatus: sinon.spy() }
-    return getHandler('POST /item')(req, res)
-      .then(() => {
-        expect(res.sendStatus.calledWith(200)).to.be.true
-        return db.models.ShoppingItem.findAll()
-      })
-      .then(rows => rows.length)
-      .should.eventually.equal(1)
+    const res = {
+      sendStatus: status => {
+        expect(status).to.equal(200)
+        db.models.ShoppingItem.findAll()
+          .then(rows => rows.length)
+          .then(length => {
+            expect(length).to.equal(1)
+            done()
+          })
+      }
+    }
+    getRequestHandler('POST /item')(req, res)
   })
 })

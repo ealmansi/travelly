@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "ENV=testing LOG_LEVEL=info DATABASE_LOGGING=true ./node_modules/mocha/bin/mocha --timeout 10000 --recursive test/ unit/"
+    "test": "ENV=testing LOG_LEVEL=info DATABASE_LOGGING=true ./node_modules/mocha/bin/mocha --timeout 10000 --recursive test/ unit/",
+    "unit": "ENV=testing LOG_LEVEL=info DATABASE_LOGGING=true ./node_modules/mocha/bin/mocha --recursive unit/"
   },
   "engines": {
     "node": "~8.1.4",
