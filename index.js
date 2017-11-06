@@ -1,11 +1,14 @@
-require('dotenv').config()
 const port = process.env.PORT || 3005
 const db = require('./src/db')
 const app = require('./src/app')
+const logger = require('./src/logger')
 
-db.sequelize.sync({ force: true })
+db.initialize()
   .then(() => {
     app.listen(port, () => {
-      console.log(`Listening on port: ${port}.`)
+      logger.info(`Listening on port: ${port}.`)
     })
+  })
+  .catch(err => {
+    logger.error('Failed to initialize database.', err)
   })

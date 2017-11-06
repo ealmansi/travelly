@@ -1,15 +1,19 @@
-require('dotenv').config()
 const chai = require('chai')
 const assert = chai.assert
 const request = require('supertest-as-promised')
 const express = require('express')
+const config = require('../config')
 const db = require('../src/db')
 const app = require('../src/app')
 
 describe('CRUD operations on items', () => {
   
   before(function(done) {
-    db.sequelize.sync({ force: true }).then(() => done())
+    db.sequelize.drop().then(() => {
+      db.initialize().then(() => {
+        done()
+      })
+    })
   })
   
   after(function(done) {
@@ -19,12 +23,14 @@ describe('CRUD operations on items', () => {
   it('should create, retrieve and delete items successfully', () => {
     const testItem = { item: 'some item' }
     return request(app)
-      .post('/item')
+      .post('/v1/item')
+      .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
       .send(testItem)
       .expect(200)
     .then(() => {
       return request(app)
-        .get('/items')
+        .get('/v1/items')
+        .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
@@ -34,13 +40,15 @@ describe('CRUD operations on items', () => {
     })
     .then(() => {
       return request(app)
-        .del('/item')
+        .del('/v1/item')
+        .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
         .query(testItem)
         .expect(200)
     })
     .then(() => {
       return request(app)
-        .get('/items')
+        .get('/v1/items')
+        .auth(config.get('ADMIN_USERNAME'), config.get('ADMIN_PASSWORD'))
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
