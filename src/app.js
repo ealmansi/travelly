@@ -25,7 +25,8 @@ passport.use(new BasicStrategy(
   (username, password, done) => {
     db.models.User.findOne({ where: { username: username } })
       .then(user => {
-        if (!user || !crypto.validatePassword(password, user.passwordHash)) {
+        if (!user || !password || !user.passwordHash
+            || !crypto.validatePassword(password, user.passwordHash)) {
           return done(null, false)
         }
         return done(null, user)
