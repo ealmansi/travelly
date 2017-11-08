@@ -10,7 +10,7 @@ chai.use(chaiAsPromised)
 const testUser = {
   name: 'test_name',
   username: 'test_username',
-  email: 'test_email',
+  email: 'test_email@domain.com',
   password: 'test_password'
 }
 
@@ -48,8 +48,8 @@ describe('auth signup unit tests', function() {
   it('signup request should succed on valid input', done => {
     const req = { body: testUser }
     const res = {
-      sendStatus: status => {
-        expect(status).to.equal(200)
+      send: user => {
+        expect(user.username).to.equal(testUser.username)
         db.models.User.find({ where: { username: testUser.username } })
           .then(user => {
             expect(user).to.not.be.undefined

@@ -1,31 +1,40 @@
-const authUtil = require('../util')
-const bcrypt = require('bcrypt')
+const Sequelize = require('sequelize')
+const Op = Sequelize.Op
+const crypto = require('../../../crypto')
+const logger = require('../../../logger')
+const responseUtil = require('../../util/response')
+const validationUtil = require('../../util/validation')
 
-module.exports = db => ({
-  'POST /signup': [
-    (req, res) => {
-      if (!req.body
-        || !req.body.name
-        || !req.body.username
-        || !req.body.email
-        || !req.body.password
-      ) {
-        res.sendStatus(422)
-        return
+module.exports = db => {
+  const authMiddleware = require('../../middleware/auth')(db)
+
+  return {
+    'POST /signup': [
+      (req, res) => {
+        if (!req.body || !validationUtil.isValidUserData(req.body)) {
+          res.sendStatus(422)
+          return
+        }
+        const userData = Object.assign(req.body, {
+          email: req.body.email.toLowerCase(),
+          passwordHash: crypto.hashPassword(req.body.password),
+          isAdmin: false,
+          isManager: false,
+        })
+        db.models.User.create(userData)
+          .then(user => {
+            res.send(responseUtil.rowToUser(user))
+          })
+          .catch(err => {
+            if (err.errors && err.errors[0] && err.errors[0].type &&
+                err.errors[0].type === 'unique violation') {
+              res.sendStatus(409)
+              return
+            }
+            throw err
+          })
+          .catch(responseUtil.logAndReturn500(res))
       }
-      if (req.user) {
-        res.sendStatus(409)
-        return
-      }
-      db.models.User.create({
-        name: req.body.name,
-        username: req.body.username,
-        email: req.body.email,
-        passwordHash: bcrypt.hashSync(req.body.password, 10),
-        isAdmin: false,
-      }).then(() => {
-        res.sendStatus(200)
-      })
-    }
-  ]
-})
+    ]
+  }
+}

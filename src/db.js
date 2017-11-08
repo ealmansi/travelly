@@ -1,6 +1,6 @@
-const config = require('../config')
-const bcrypt = require('bcrypt')
 const Sequelize = require('sequelize')
+const config = require('../config')
+const crypto = require('../src/crypto')
 
 const isProductionEnv = config.get('ENV') === 'production' 
 
@@ -22,7 +22,7 @@ if (isProductionEnv) {
     name: config.get('ADMIN_NAME'),
     username: config.get('ADMIN_USERNAME'),
     email: config.get('ADMIN_EMAIL'),
-    passwordHash: bcrypt.hashSync(config.get('ADMIN_PASSWORD'), 10),
+    passwordHash: crypto.hashPassword(config.get('ADMIN_PASSWORD')),
     isAdmin: true
   }
 }
@@ -32,7 +32,7 @@ else {
     name: config.get('TEST_ADMIN_NAME'),
     username: config.get('TEST_ADMIN_USERNAME'),
     email: config.get('TEST_ADMIN_EMAIL'),
-    passwordHash: bcrypt.hashSync(config.get('TEST_ADMIN_PASSWORD'), 10),
+    passwordHash: crypto.hashPassword(config.get('TEST_ADMIN_PASSWORD')),
     isAdmin: true
   }
 }

@@ -6,15 +6,20 @@ module.exports = sequelize => {
       type: Sequelize.STRING
     },
     username: {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      unique: true
     },
     email: {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      unique: true
     },
     passwordHash: {
       type: Sequelize.STRING
     },
     isAdmin: {
+      type: Sequelize.BOOLEAN
+    },
+    isManager: {
       type: Sequelize.BOOLEAN
     }
   })

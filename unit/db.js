@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize')
+const crypto = require('../src/crypto')
 
 const sequelize = new Sequelize('database', 'username', 'password', { 
   dialect: 'sqlite', 
@@ -20,7 +21,7 @@ const initialize = () => {
           name: 'test_admin_name',
           username: 'test_admin_username',
           email: 'test_admin_email',
-          passwordHash: bcrypt.hashSync('test_admin_password', 10),
+          passwordHash: crypto.hashPassword('test_admin_password'),
           isAdmin: true
         }
       })

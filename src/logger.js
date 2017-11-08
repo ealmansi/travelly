@@ -1,9 +1,17 @@
 const winston = require('winston')
+const moment = require('moment')
 
-winston.level = process.env.LOG_LEVEL || 'debug'
+const logger = new (winston.Logger)({
+  level: process.env.LOG_LEVEL || 'debug',
+  transports: [
+    new (winston.transports.Console)({
+      timestamp: () => moment().toString()
+    })
+  ]
+})
 
-winston.disable = () => {
-  winston.remove(winston.transports.Console)
+logger.disable = () => {
+  logger.remove(winston.transports.Console)
 }
 
-module.exports = winston
+module.exports = logger

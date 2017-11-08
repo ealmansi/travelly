@@ -1,10 +1,14 @@
-const authUtil = require('../util')
+const responseUtil = require('../../util/response')
 
-module.exports = db => ({
-  'POST /login': [
-    authUtil.isLoggedIn,
-    (req, res) => {
-      res.sendStatus(200)
-    }
-  ]
-})
+module.exports = db => {
+  const authMiddleware = require('../../middleware/auth')(db)
+
+  return {
+    'POST /login': [
+      authMiddleware.isLoggedIn,
+      (req, res) => {
+        res.send(responseUtil.rowToUser(req.user))
+      }
+    ]
+  }
+}
