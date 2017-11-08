@@ -90,7 +90,8 @@ describe('CRUD operations on trips', () => {
       destination: 'Brazil',
       startDate: '2016-01-01 00:00:00+00:00',
       endDate: '2016-02-01 00:00:00+00:00',
-      comment: 'Heading out to the beach!'
+      comment: 'Heading out to the beach!',
+      userId: 1
     }
     let testTripId
 
