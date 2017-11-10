@@ -23,7 +23,7 @@ if (isProductionEnv) {
     username: config.get('ADMIN_USERNAME'),
     email: config.get('ADMIN_EMAIL'),
     passwordHash: crypto.hashPassword(config.get('ADMIN_PASSWORD')),
-    isAdmin: true
+    role: 'admin'
   }
 }
 else {
@@ -33,12 +33,12 @@ else {
     username: config.get('TEST_ADMIN_USERNAME'),
     email: config.get('TEST_ADMIN_EMAIL'),
     passwordHash: crypto.hashPassword(config.get('TEST_ADMIN_PASSWORD')),
-    isAdmin: true
+    role: 'admin'
   }
 }
 
 const initialize = () => {
-  return sequelize.sync({ force: false })
+  return sequelize.sync({ force: !isProductionEnv })
     .then(() => {
       return models.User.findOrCreate({
         where: {
@@ -49,7 +49,7 @@ const initialize = () => {
           username: admin.username,
           email: admin.email,
           passwordHash: admin.passwordHash,
-          isAdmin: admin.isAdmin
+          role: admin.role
         }
       })
     })

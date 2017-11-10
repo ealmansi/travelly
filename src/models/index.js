@@ -1,7 +1,6 @@
 module.exports = sequelize => {
   return {
     User: require('./user')(sequelize),
-    Trip: require('./trip')(sequelize),
-    ShoppingItem: require('./shoppingItem')(sequelize)
+    Trip: require('./trip')(sequelize)
   }
 }

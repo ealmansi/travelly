@@ -1,64 +1,81 @@
+const HttpStatus = require('http-status-codes')
 const passport = require('passport')
+const basicAuth = require('basic-auth')
+const { validatePassword } = require('../../crypto')
+
 
 module.exports = db => {
 
-  return {
-    isLoggedIn: authenticationMiddleware(
-      (user, params) => {
-        return user
-      }
-    ),
+  let self
 
-    hasGeneralTripAccess: authenticationMiddleware(
-      (user, params) => {
-        return user && user.isAdmin
-      }
-    ),
-    
-    hasSpecificTripAccess: authenticationMiddleware(
-      (user, params) => {
-        return user && (user.isAdmin || params.trip && params.trip.userId === user.id)
-      }
-    ),
-    
-    hasUserTripsAccess: authenticationMiddleware(
-      (user, params) => {
-        return user && (user.isAdmin || params.user && params.user.id === user.id)
-      }
-    ),
+  return self = {
 
-    hasGeneralUserAccess: authenticationMiddleware(
-      (user, params) => {
-        return user && (user.isManager || user.isAdmin)
-      }
-    ),
+    accessTypes: {
+      USER: 'USER',         // Authenticated user, all resources.
+      MANAGER: 'MANAGER',   // Authenticated manager, all resources.
+      ADMIN: 'ADMIN',       // Authenticated admin, all resources.
+      SELF: 'SELF',         // Authenticated user, own record.
+      OWNER: 'OWNER'        // Authenticated user, owned records.
+    },
 
-    hasSpecificUserAccess: authenticationMiddleware(
-      (user, params) => {
-        return user && (user.isManager || user.isAdmin || params.user && params.user.id === user.id)
-      }
-    )
-  }
-
-  function authenticationMiddleware(predicate) {
-    return (req, res, next) => {
-      const callback = authenticateByPredicate(predicate, req, res, next)
-      passport.authenticate('basic', { session: false }, callback)(req, res, next)
-    }
-  }
-  
-  function authenticateByPredicate(predicate, req, res, next) {
-    return (err, user, info) => {
-      if(err) {
-        res.sendStatus(500)
-      }
-      if (!predicate(user, req.params)) {
-        res.sendStatus(401)
-      }
-      else {
+    checkAccess: accessSpecs => async (req, res, next) => {
+      try {
+        const user = await self.getAuthenticatedUser(req)
+        if (!user || !self.satisfiesSpecs(user, accessSpecs, req)) {
+          res.sendStatus(HttpStatus.UNAUTHORIZED)
+          return
+        }
         req.user = user
         next()
       }
+      catch (err) {
+        next(err)
+      }
+    },
+
+    getAuthenticatedUser: async req => {
+      const credentials = basicAuth(req)
+      if (!credentials) {
+        return null
+      }
+      const user = await db.models.User.findOne({ where: { username: credentials.name } })
+      if (!user || !validatePassword(credentials.pass, user.passwordHash)) {
+        return null
+      }
+      return user
+    },
+
+    satisfiesSpecs: (user, accessSpecs, req) => {
+      for (var i = 0; i < accessSpecs.length; i++) {
+        const accessSpec = accessSpecs[i]
+        switch (accessSpec) {
+        case self.accessTypes.USER:
+          return true
+        case self.accessTypes.MANAGER:
+          if (user.role === 'manager') {
+            return true
+          }
+          break
+        case self.accessTypes.ADMIN:
+          if (user.role === 'admin') {
+            return true
+          }
+          break
+        case self.accessTypes.SELF:
+          if (req.params.user && req.params.user.id === user.id) {
+            return true
+          }
+          break
+        case self.accessTypes.OWNER:
+          if (req.params.trip && req.params.trip.userId === user.id) {
+            return true
+          }
+          break
+        default:
+          throw new Error(`Unexpected access type: ${accessSpec}.`)
+        }
+      }
+      return false
     }
   }
 }

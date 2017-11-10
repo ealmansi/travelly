@@ -1,8 +1,27 @@
+const HttpStatus = require('http-status-codes')
 const chai = require('chai')
 const assert = chai.assert
 const request = require('supertest-as-promised')
 const express = require('express')
 const config = require('../config')
+
+const testAdmin = {
+  username: config.get('TEST_ADMIN_USERNAME'),
+  password: config.get('TEST_ADMIN_PASSWORD')
+}
+
+const testManager = {
+  username: 'someManager',
+  email: 'someManager@domain.com',
+  password: 'somePassword',
+  role: 'manager'
+}
+
+const testUser = {
+  username: 'someUser',
+  email: 'someUser@domain.com',
+  password: 'somePassword'
+}
 
 describe('CRUD operations on users', () => {
   let db
@@ -26,165 +45,140 @@ describe('CRUD operations on users', () => {
     })
   })
 
-  it('user should be able to retrieve and modify her own data', () => {
-    let testUser = {
-      username: 'someUser',
-      email: 'someEmail@domain.com',
-      password: 'somePassword'
-    }
+  it('admin should be able to create, retrieve, update and delete users successfully', () => {
     let testUserId
 
-    return doSignUp().then(doGet1).then(doPatch1)
-    
-    function doSignUp() {
+    return getUsers()
+    .then(createUser).then(getUser1)
+    .then(updateUser).then(getUser2)
+    .then(deleteUser).then(getUser3)
+
+    function getUsers() {
       return request(app)
-        .post('/auth/signup')
-        .send(testUser)
-        .expect(200)
-        .then(response => testUserId = response.body.id)
+      .get('/v1/users').auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.length, 1))
     }
 
-    function doGet1() {
+    function createUser() {
       return request(app)
-        .get(`/v1/user/${testUserId}`)
-        .auth(testUser.username, testUser.password)
-        .expect(200)
-        .then(response => assert.equal(response.body.id, testUserId))
+      .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testUser)
+      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
     }
 
-    function doPatch1() {
+    function getUser1() {
       return request(app)
-        .patch(`/v1/user/${testUserId}`)
-        .auth(testUser.username, testUser.password)
-        .send({ name: 'Some Other Name' })
-        .expect(200)
-        .then(response => assert.equal(response.body.name, 'Some Other Name'))
+      .get(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testUser.username))
+    }
+
+    function updateUser() {
+      const updatedTestUser = Object.assign({}, testUser, { name: 'someName' })
+      return request(app)
+      .put(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password).send(updatedTestUser)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.name, updatedTestUser.name))
+    }
+
+    function getUser2() {
+      return request(app)
+      .get(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, testUserId))
+    }
+
+    function deleteUser() {
+      return request(app)
+      .delete(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK)
+    }
+
+    function getUser3() {
+      return request(app)
+      .get(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.NOT_FOUND)
     }
   })
 
-  it('admin should be able to create, retrieve and delete users successfully', () => {
-    let testUser = {
-      username: 'someUser',
-      email: 'someEmail@domain.com',
-      password: 'somePassword'
-    }
+  it('manager should be able to create, retrieve, update and delete users successfully', () => {
+    let testManagerId
     let testUserId
 
-    return doGet1().then(doPost1).then(doGet2).then(doDelete1).then(doGet3)
-    
-    function doGet1() {
+    return createManager()
+   .then(createUser).then(getUser1)
+    .then(updateUser).then(getUser2)
+    .then(deleteUser).then(getUser3)
+
+    function createManager() {
       return request(app)
-        .get('/v1/users')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 1))
+      .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testManager)
+      .expect(HttpStatus.OK).then(response => testManagerId = response.body.id)
     }
 
-    function doPost1() {
+    function createUser() {
       return request(app)
-        .post('/v1/user')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .send(testUser)
-        .expect(200)
-        .then(response => testUserId = response.body.id)
+      .post('/v1/users').auth(testManager.username, testManager.password).send(testUser)
+      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
     }
 
-    function doGet2() {
+    function getUser1() {
       return request(app)
-        .get('/v1/users')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 2))
+      .get(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testUser.username))
     }
 
-    function doDelete1() {
+    function updateUser() {
+      const updatedTestUser = Object.assign({}, testUser, { name: 'someName' })
       return request(app)
-        .del(`/v1/user/${testUserId}`)
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .expect(200)
+      .put(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password).send(updatedTestUser)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.name, updatedTestUser.name))
     }
 
-    function doGet3() {
+    function getUser2() {
       return request(app)
-        .get('/v1/users')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 1))
+      .get(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, testUserId))
+    }
+
+    function deleteUser() {
+      return request(app)
+      .delete(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password)
+      .expect(HttpStatus.OK)
+    }
+
+    function getUser3() {
+      return request(app)
+      .get(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password)
+      .expect(HttpStatus.NOT_FOUND)
     }
   })
 
-  it('manager should be able to create, retrieve and delete users successfully', () => {
-    let managerUser = {
-      username: 'someManager',
-      email: 'someEmail@domain.com',
-      password: 'somePassword'
-    }
-    let managerUserId
-    let testUser = {
-      username: 'someUser',
-      email: 'someOtherEmail@domain.com',
-      password: 'somePassword'
-    }
+  it('user should be able to retrieve and update her own data successfully', () => {
     let testUserId
 
-    return doSignUp1().then(doPatch1)
-        .then(doGet1).then(doPost1).then(doGet2).then(doDelete1).then(doGet3)
-    
-    function doSignUp1() {
+    return createUser()
+    .then(getUser1).then(updateUser).then(getUser2)
+
+    function createUser() {
       return request(app)
-        .post('/auth/signup')
-        .send(managerUser)
-        .expect(200)
-        .then(response => managerUserId = response.body.id)
+      .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testUser)
+      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
     }
 
-    function doPatch1() {
+    function getUser1() {
       return request(app)
-        .patch(`/v1/user/${managerUserId}`)
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .send({ isManager: true })
-        .expect(200)
-        .then(response => assert.equal(response.body.isManager, true))
+      .get(`/v1/users/${testUserId}`).auth(testUser.username, testUser.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testUser.username))
     }
 
-    function doGet1() {
+    function updateUser() {
+      const updatedTestUser = Object.assign({}, testUser, { name: 'someName' })
       return request(app)
-        .get('/v1/users')
-        .auth(managerUser.username, managerUser.password)
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 2))
+      .put(`/v1/users/${testUserId}`).auth(testUser.username, testUser.password).send(updatedTestUser)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.name, updatedTestUser.name))
     }
 
-    function doPost1() {
+    function getUser2() {
       return request(app)
-        .post('/v1/user')
-        .auth(managerUser.username, managerUser.password)
-        .send(testUser)
-        .expect(200)
-        .then(response => testUserId = response.body.id)
-    }
-
-    function doGet2() {
-      return request(app)
-        .get('/v1/users')
-        .auth(managerUser.username, managerUser.password)
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 3))
-    }
-
-    function doDelete1() {
-      return request(app)
-        .del(`/v1/user/${testUserId}`)
-        .auth(managerUser.username, managerUser.password)
-        .expect(200)
-    }
-
-    function doGet3() {
-      return request(app)
-        .get('/v1/users')
-        .auth(managerUser.username, managerUser.password)
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 2))
+      .get(`/v1/users/${testUserId}`).auth(testUser.username, testUser.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, testUserId))
     }
   })
 })

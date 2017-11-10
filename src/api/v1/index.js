@@ -1,5 +1,5 @@
 module.exports = db => Object.assign({},
-  require('./items')(db),
+  require('./auth')(db),
   require('./users')(db),
   require('./trips')(db)
 )

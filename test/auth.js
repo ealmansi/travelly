@@ -1,8 +1,20 @@
+const HttpStatus = require('http-status-codes')
 const chai = require('chai')
 const assert = chai.assert
 const request = require('supertest-as-promised')
 const express = require('express')
 const config = require('../config')
+
+const testAdmin = {
+  username: config.get('TEST_ADMIN_USERNAME'),
+  password: config.get('TEST_ADMIN_PASSWORD')
+}
+
+let testUser = {
+  username: 'someUser',
+  email: 'someEmail@domain.com',
+  password: 'somePassword'
+}
 
 describe('CRUD operations on trips', () => {
   let db
@@ -28,38 +40,25 @@ describe('CRUD operations on trips', () => {
 
   it('admin should be able to log in successfully', () => {
     return request(app)
-      .post('/auth/login')
-      .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-      .set('Accept', 'application/json')
-      .expect('Content-Type', /json/)
-      .expect(200)
+    .post('/v1/auth/login')
+    .auth(testAdmin.username, testAdmin.password)
+    .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testAdmin.username))
   })
 
   it('user should be able to sign up and log in successfully', () => {
-    let testUser = {
-      username: 'someUser',
-      email: 'someEmail@domain.com',
-      password: 'somePassword'
+
+    return signUp().then(logIn)
+
+    function signUp() {
+      return request(app)
+      .post('/v1/auth/signup').send(testUser)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testUser.username))
     }
 
-    return doSignUp().then(doLogIn)
-    
-    function doSignUp() {
+    function logIn() {
       return request(app)
-        .post('/auth/signup')
-        .send(testUser)
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200)
-    }
-
-    function doLogIn() {
-      return request(app)
-        .post('/auth/login')
-        .auth(testUser.username, testUser.password)
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200)
+      .post('/v1/auth/login').auth(testUser.username, testUser.password)
+      .expect(HttpStatus.OK)
     }
   })
 })

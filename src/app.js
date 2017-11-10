@@ -1,3 +1,4 @@
+const HttpStatus = require('http-status-codes')
 const logger = require('./logger')
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -21,6 +22,35 @@ app.use((req, res, next) => {
   next()
 })
 
+for (let [version, routes] of Object.entries(api)) {
+  for (let [route, spec] of Object.entries(routes)) {
+    const [verb, endpoint] = route.split(' ')
+    const [handler, ...reversedMiddleware] = spec.slice().reverse()
+    const method = verb.toLowerCase()
+    const versionEndpoint = `${version}${endpoint}`
+    const wrappedMiddleware = reversedMiddleware.reverse().map(errorHandler)
+    const wrappedHandler = errorHandler(handler)
+    app[method](versionEndpoint, ...wrappedMiddleware, wrappedHandler)
+    logger.info(`API end-point registered: ${verb} ${versionEndpoint}.`)
+  }
+}
+
+function errorHandler(handler) {
+  return async (req, res, next) => {
+    try {
+      await handler(req, res, next)
+    }
+    catch (err) {
+      next(err)
+    }
+  }
+}
+
+app.use(function (err, req, res, next) {
+  logger.error(err)
+  res.sendStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+})
+
 passport.use(new BasicStrategy(
   (username, password, done) => {
     db.models.User.findOne({ where: { username: username } })
@@ -37,14 +67,5 @@ passport.use(new BasicStrategy(
       })
   }
 ))
-
-for (let [version, routes] of Object.entries(api)) {
-  for (let [route, spec] of Object.entries(routes)) {
-    const [method, endpoint] = route.split(' ')
-    const [handler, ...middleware] = spec.slice().reverse()
-    app[method.toLowerCase()](version + endpoint, ...middleware.reverse(), handler)
-    logger.info(`API end-point registered: ${method} ${version}${endpoint}.`)
-  }
-}
 
 module.exports = app

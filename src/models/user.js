@@ -7,20 +7,22 @@ module.exports = sequelize => {
     },
     username: {
       type: Sequelize.STRING,
-      unique: true
+      unique: true,
+      required: true
     },
     email: {
       type: Sequelize.STRING,
-      unique: true
+      unique: true,
+      required: true
     },
     passwordHash: {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      required: true
     },
-    isAdmin: {
-      type: Sequelize.BOOLEAN
-    },
-    isManager: {
-      type: Sequelize.BOOLEAN
+    role: {
+      type: Sequelize.ENUM,
+      values: ['user', 'manager', 'admin'],
+      required: true
     }
   })
 }

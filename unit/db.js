@@ -8,24 +8,25 @@ const sequelize = new Sequelize('database', 'username', 'password', {
   operatorsAliases: false
 })
 
+// Hack: sqlite does not support iLike.
+sequelize.Op.iLike = sequelize.Op.like
+
 const models = require('../src/models')(sequelize)
 
-const initialize = () => {
-  return sequelize.sync({ force: true })
-    .then(() => {
-      return models.User.findOrCreate({
-        where: {
-          username: 'test_admin_username'
-        },
-        defaults: {
-          name: 'test_admin_name',
-          username: 'test_admin_username',
-          email: 'test_admin_email',
-          passwordHash: crypto.hashPassword('test_admin_password'),
-          isAdmin: true
-        }
-      })
-    })
+const initialize = async () => {
+  await sequelize.sync({ force: true })
+  await models.User.findOrCreate({
+    where: {
+      username: 'test_admin_username'
+    },
+    defaults: {
+      name: 'test_admin_name',
+      username: 'test_admin_username',
+      email: 'test_admin_email',
+      passwordHash: crypto.hashPassword('test_admin_password'),
+      role: 'admin'
+    }
+  })
 }
 
 module.exports = {

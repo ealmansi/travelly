@@ -1,14 +1,42 @@
+const HttpStatus = require('http-status-codes')
 const chai = require('chai')
 const assert = chai.assert
 const request = require('supertest-as-promised')
 const express = require('express')
 const config = require('../config')
 
+const testAdmin = {
+  username: config.get('TEST_ADMIN_USERNAME'),
+  password: config.get('TEST_ADMIN_PASSWORD')
+}
+
+const adminTestTrip = {
+  destination: 'someDestinationForAdmin',
+  startDate: '1970/01/01',
+  endDate: '1970/01/02',
+  comment: 'someCommentFromAdmin',
+  userId: 1
+}
+
+const testUser = {
+  username: 'someUser',
+  email: 'someUser@domain.com',
+  password: 'somePassword',
+  role: 'user'
+}
+
+const userTestTrip = {
+  destination: 'someDestinationForUser',
+  startDate: '1970/01/01',
+  endDate: '1970/01/02',
+  comment: 'someCommentFromUser'
+}
+
 describe('CRUD operations on trips', () => {
   let db
   let app
 
-  before(function(done) {
+  beforeEach(function(done) {
     db = require('../src/db')
     app = require('../src/app')
     db.sequelize.drop().then(() => {
@@ -18,7 +46,7 @@ describe('CRUD operations on trips', () => {
     })
   })
   
-  after(function(done) {
+  afterEach(function(done) {
     db.sequelize.close().then(() => {
       delete require.cache[require.resolve('../src/db')]
       delete require.cache[require.resolve('../src/app')]
@@ -26,121 +54,114 @@ describe('CRUD operations on trips', () => {
     })
   })
 
-  it('user should be able to create, retrieve and delete trips successfully', () => {
-    let testUser = {
-      username: 'someUser',
-      email: 'someEmail@domain.com',
-      password: 'somePassword'
-    }
-    let testUserId
-    let testTrip = {
-      destination: 'Brazil',
-      startDate: '2016-01-01 00:00:00+00:00',
-      endDate: '2016-02-01 00:00:00+00:00',
-      comment: 'Heading out to the beach!'
-    }
-    let testTripId
+  it('admin should be able to create, retrieve, update and delete trips successfully', () => {
+    let adminTestTripId
 
-    return doSignUp().then(doPost1).then(doGet1).then(doPatch1).then(doDelete1)
-    
-    function doSignUp() {
+    return getTrips()
+    .then(createTrip).then(getTrip1)
+    .then(updateTrip).then(getTrip2)
+    .then(deleteTrip).then(getTrip3)
+    .then(createTrip2).then(getTrip4)
+
+    function getTrips() {
       return request(app)
-        .post('/auth/signup')
-        .send(testUser)
-        .expect(200)
-        .then(response => testUserId = response.body.id)
+      .get('/v1/trips').auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.length, 0))
     }
 
-    function doPost1() {
+    function createTrip() {
       return request(app)
-        .post(`/v1/user/${testUserId}/trip`)
-        .auth(testUser.username, testUser.password)
-        .send(testTrip)
-        .expect(200)
-        .then(response => testTripId = response.body.id)
+      .post('/v1/trips').auth(testAdmin.username, testAdmin.password).send(adminTestTrip)
+      .expect(HttpStatus.OK).then(response => adminTestTripId = response.body.id)
     }
 
-    function doGet1() {
+    function getTrip1() {
       return request(app)
-        .get(`/v1/user/${testUserId}/trips`)
-        .auth(testUser.username, testUser.password)
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 1))
+      .get(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.destination, adminTestTrip.destination))
     }
 
-    function doPatch1() {
+    function updateTrip() {
+      const updatedTestTrip = Object.assign({}, adminTestTrip, { comment: 'someOtherComment' })
       return request(app)
-        .patch(`/v1/trip/${testTripId}`)
-        .auth(testUser.username, testUser.password)
-        .send({ destination: 'France' })
-        .expect(200)
-        .then(response => assert.equal(response.body.destination, 'France'))
+      .put(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password).send(updatedTestTrip)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.comment, updatedTestTrip.comment))
     }
 
-    function doDelete1() {
+    function getTrip2() {
       return request(app)
-        .del(`/v1/trip/${testTripId}`)
-        .auth(testUser.username, testUser.password)
-        .expect(200)
+      .get(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, adminTestTripId))
+    }
+
+    function deleteTrip() {
+      return request(app)
+      .delete(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK)
+    }
+
+    function getTrip3() {
+      return request(app)
+      .get(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.NOT_FOUND)
+    }
+
+    function createTrip2() {
+      return request(app)
+      .post('/v1/users/1/trips').auth(testAdmin.username, testAdmin.password).send(adminTestTrip)
+      .expect(HttpStatus.OK).then(response => adminTestTripId = response.body.id)
+    }
+
+    function getTrip4() {
+      return request(app)
+      .get('/v1/users/1/trips').auth(testAdmin.username, testAdmin.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.length, 1))
     }
   })
 
-  it('admin should be able to create, retrieve and delete trips successfully', () => {
-    let testTrip = {
-      destination: 'Brazil',
-      startDate: '2016-01-01 00:00:00+00:00',
-      endDate: '2016-02-01 00:00:00+00:00',
-      comment: 'Heading out to the beach!',
-      userId: 1
-    }
-    let testTripId
+  it('user should be able to retrieve and update her own trips successfully', () => {
+    let testUserId
+    let userTestTripId
 
-    return doGet1().then(doPost1).then(doGet2).then(doDelete1).then(doGet3)
-    
-    function doGet1() {
+    return createUser()
+    .then(createTrip)//.then(getTrip1).then(updateTrip).then(deleteTrip).then(getTrip2)
+
+    function createUser() {
       return request(app)
-        .get('/v1/trips')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 0))
+      .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testUser)
+      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
+      .then(() => userTestTrip.userId = testUserId)
     }
 
-    function doPost1() {
+    function createTrip() {
       return request(app)
-        .post('/v1/trip')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .send(testTrip)
-        .expect(200)
-        .then(response => testTripId = response.body.id)
+      .post(`/v1/users/${testUserId}/trips`).auth(testUser.username, testUser.password).send(userTestTrip)
+      .expect(HttpStatus.OK).then(response => userTestTripId = response.body.id)
     }
 
-    function doGet2() {
+    function getTrip1() {
       return request(app)
-        .get('/v1/trips')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 1))
+      .get(`/v1/users/${testUserId}/trips/${userTestTripId}`).auth(testUser.username, testUser.password)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.destination, userTestTrip.destination))
     }
 
-    function doDelete1() {
+    function updateTrip() {
+      const updatedTestTrip = Object.assign({}, userTestTrip, { comment: 'someOtherComment' })
       return request(app)
-        .del(`/v1/trip/${testTripId}`)
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .expect(200)
+      .put(`/v1/trips/${userTestTripId}`).auth(testUser.username, testUser.password).send(updatedTestTrip)
+      .expect(HttpStatus.OK).then(response => assert.equal(response.body.comment, updatedTestTrip.comment))
     }
 
-    function doGet3() {
+    function deleteTrip() {
       return request(app)
-        .get('/v1/trips')
-        .auth(config.get('TEST_ADMIN_USERNAME'), config.get('TEST_ADMIN_PASSWORD'))
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .then(response => assert.equal(response.body.length, 0))
+      .delete(`/v1/trips/${userTestTripId}`).auth(testUser.username, testUser.password)
+      .expect(HttpStatus.OK)
+    }
+
+    function getTrip2() {
+      return request(app)
+      .get(`/v1/trips/${userTestTripId}`).auth(testUser.username, testUser.password)
+      .expect(HttpStatus.NOT_FOUND)
     }
   })
 })

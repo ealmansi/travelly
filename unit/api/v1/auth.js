@@ -1,4 +1,4 @@
-const util = require('../../util')
+const HttpStatus = require('http-status-codes')
 const sinon = require('sinon')
 const chai = require('chai')
 const chaiAsPromised = require("chai-as-promised")
@@ -14,38 +14,36 @@ const testUser = {
   password: 'test_password'
 }
 
-describe('auth signup unit tests', function() {
+describe('auth routes unit tests', function() {
   let db
-  let getRequestHandler
+  let getHandler
+  let getMockResponseObject
   
-  beforeEach(function(done) {
+  beforeEach(async () => {
     db = require('../../db')
-    db.sequelize.sync().then(() => {
-      const api = require('../../../src/api/auth')(db)
-      getRequestHandler = util.getRequestHandlerFromApi(api)
-      done()
-    })
+    await db.initialize()
+    const api = require('../../../src/api/v1')(db)
+    const util = require('../../util')(api)
+    getHandler = util.getHandler
+    getMockResponseObject = util.getMockResponseObject
   })
 
-  afterEach(function(done) {
-    db.sequelize.drop().then(() => {
-      delete require.cache[require.resolve('../../db')]
-      done()
-    })
+  afterEach(async () => {
+    await db.sequelize.drop()
+    delete require.cache[require.resolve('../../db')]
   })
 
-  it('signup request should fail on invalid input', done => {
+  it('signup request should fail on invalid input', async () => {
     const req = { body: { } }
     const res = {
       sendStatus: status => {
-        expect(status).to.equal(422)
-        done()
+        expect(status).to.equal(HttpStatus.BAD_REQUEST)
       }
     }
-    getRequestHandler('POST /signup')(req, res)
+    await getHandler('POST /auth/signup')(req, res)
   })
   
-  it('signup request should succed on valid input', done => {
+  it('signup request should succed on valid input', async () => {
     const req = { body: testUser }
     const res = {
       send: user => {
@@ -53,10 +51,9 @@ describe('auth signup unit tests', function() {
         db.models.User.find({ where: { username: testUser.username } })
           .then(user => {
             expect(user).to.not.be.undefined
-            done()
           })
       }
     }
-    getRequestHandler('POST /signup')(req, res)
+    await getHandler('POST /auth/signup')(req, res)
   })
 })
