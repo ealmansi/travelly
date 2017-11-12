@@ -1,52 +1,49 @@
-const HttpStatus = require('http-status-codes')
-const crypto = require('../../crypto')
-const Sequelize = require('sequelize')
 
 module.exports = db => {
 
   const Op = db.sequelize.Op
-  const { rowToUser } = require('../util/response')
-  const { isValidUserData } = require('../util/validation')(db)
+  const { sendUser } = require('../util/response')
+  const { catchError, sendValidationError, sendUserExistsError } = require('../util/errors')
   const { checkAccess, accessTypes } = require('../middleware/auth')(db)
-  const { USER } = accessTypes
+  const { LOG_IN } = accessTypes
 
   return {
 
     /**
-     * User login.
+     * User sign-up.
      */
-    'POST /auth/login': [checkAccess([USER]), async (req, res, next) => {
-      res.send(rowToUser(req.user))
-    }],
+    'POST /auth/signup': [
+      async (req, res, next) => {
+        const userData = Object.assign({}, req.body, { role: 'user' })
+        const { result, error } = await catchError(db.models.User.findOrCreate({
+          where: {
+            username: {
+              [Op.iLike]: userData.username
+            }
+          },
+          defaults: userData
+        }))
+        if (error) {
+          sendValidationError(res, error)
+          return
+        }
+        const [user, created] = result
+        if (!created) {
+          sendUserExistsError(res)
+          return
+        }
+        sendUser(res, user)
+      }
+    ],
 
     /**
-     * User sign up.
+     * User log-in.
      */
-    'POST /auth/signup': [async (req, res, next) => {
-      const userData = req.body
-      if (!isValidUserData(userData) || userData.role) {
-        res.sendStatus(HttpStatus.BAD_REQUEST)
-        return
+    'POST /auth/login': [
+      checkAccess(LOG_IN),
+      async (req, res, next) => {
+        sendUser(res, req.user)
       }
-      const existingUser = await db.models.User.findOne({
-        where: { [Op.or]: [
-          { username: { [Op.iLike]: userData.username} },
-          { email: { [Op.iLike]: userData.email} }] }
-      }).catch(next)
-      if (existingUser) {
-        res.sendStatus(HttpStatus.CONFLICT)
-        return
-      }
-      const userSaveData = Object.assign({}, userData, {
-        passwordHash: crypto.hashPassword(userData.password),
-        role: role = 'user'
-      })
-      const user = await db.models.User.create(userSaveData).catch(next)
-      if (!user) {
-        res.sendStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-        return
-      }
-      res.send(rowToUser(user))
-    }]
+    ]
   }
 }

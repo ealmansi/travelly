@@ -23,7 +23,7 @@ const initialize = async () => {
       name: 'test_admin_name',
       username: 'test_admin_username',
       email: 'test_admin_email',
-      passwordHash: crypto.hashPassword('test_admin_password'),
+      password: 'test_admin_password',
       role: 'admin'
     }
   })

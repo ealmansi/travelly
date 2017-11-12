@@ -1,108 +1,101 @@
-const HttpStatus = require('http-status-codes')
-const crypto = require('../../crypto')
-const Sequelize = require('sequelize')
 
 module.exports = db => {
-  
+
   const Op = db.sequelize.Op
-  const { rowToUser } = require('../util/response')
-  const { isValidUserData } = require('../util/validation')(db)
+  const { sendUsersList, sendUser } = require('../util/response')
+  const { catchError, sendValidationError, sendDeleteSelfError } = require('../util/errors')
+  const { getListOptions } = require('../middleware/params')(db)
   const { loadUser } = require('../middleware/db')(db)
   const { checkAccess, accessTypes } = require('../middleware/auth')(db)
-  const { SELF, MANAGER, ADMIN } = accessTypes
+  const { LIST_USERS, VIEW_USER, CREATE_USER, EDIT_USER, DELETE_USER } = accessTypes
 
   return {
 
     /**
      * Get list of users.
      */
-    'GET /users': [checkAccess([MANAGER, ADMIN]), async (req, res, next) => {
-      const opts = {}
-      if (req.query && req.query.offset && req.query.limit) {
-        opts.offset = req.query.offset
-        opts.limit = req.query.limit
+    'GET /users': [
+      checkAccess(LIST_USERS),
+      getListOptions,
+      async (req, res, next) => {
+        const opts = req.list.opts
+        const result = await db.models.User.findAndCountAll(opts)
+        sendUsersList(res, result.rows, opts.offset, opts.limit, result.count)
       }
-      const rows = await db.models.User.findAll(opts).catch(next)
-      res.send(rows.map(rowToUser))
-    }],
+    ],
 
     /**
      * Get user with id = userId.
      */
-    'GET /users/:userId': [loadUser, checkAccess([SELF, MANAGER, ADMIN]), async (req, res, next) => {
-      res.send(rowToUser(req.params.user))
-    }],
+    'GET /users/:userId': [
+      loadUser,
+      checkAccess(VIEW_USER),
+      async (req, res, next) => {
+        sendUser(res, req.params.user)
+      }
+    ],
 
     /**
      * Create user.
      */
-    'POST /users': [checkAccess([MANAGER, ADMIN]), async (req, res, next) => {
-      const userData = req.body
-      if (!isValidUserData(userData)) {
-        res.sendStatus(HttpStatus.BAD_REQUEST)
-        return
+    'POST /users': [
+      checkAccess(CREATE_USER),
+      async (req, res, next) => {
+        const userData = req.body
+        const { result, error } = await catchError(db.models.User.findOrCreate({
+          where: {
+            username: {
+              [Op.iLike]: userData.username
+            }
+          },
+          defaults: userData
+        }))
+        if (error) {
+          sendValidationError(res, error)
+          return
+        }
+        const [user, created] = result
+        if (!created) {
+          sendUserExistsError(res)
+          return
+        }
+        sendUser(res, user)
       }
-      if (req.user.role !== 'admin' && userData.role) {
-        res.sendStatus(HttpStatus.UNAUTHORIZED)
-        return
-      }
-      const existingUser = await db.models.User.findOne({
-        where: { [Op.or]: [
-          { username: { [Op.iLike]: userData.username } },
-          { email: { [Op.iLike]: userData.email } }] }
-      }).catch(next)
-      if (existingUser) {
-        res.sendStatus(HttpStatus.CONFLICT)
-        return
-      }
-      const userSaveData = Object.assign({}, userData, {
-        passwordHash: crypto.hashPassword(userData.password),
-        role: userData.role || 'user'
-      })
-      const user = await db.models.User.create(userSaveData).catch(next)
-      if (!user) {
-        res.sendStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-        return
-      }
-      res.send(rowToUser(user))
-    }],
+    ],
 
     /**
      * Replace user with id = userId.
      */
-    'PUT /users/:userId': [loadUser, checkAccess([SELF, MANAGER, ADMIN]), async (req, res, next) => {
-      const userData = req.body
-      if (!isValidUserData(userData)) {
-        res.sendStatus(HttpStatus.BAD_REQUEST)
-        return
+    'PUT /users/:userId': [
+      loadUser,
+      checkAccess(EDIT_USER),
+      async (req, res, next) => {
+        const userData = Object.assign({}, req.body, { id: req.params.user.id })
+        const { error } = await catchError(req.params.user.update(userData))
+        if (error) {
+          sendValidationError(res, error)
+          return
+        }
+        sendUser(res, req.params.user)
       }
-      if (req.user.role !== 'admin' && userData.role) {
-        res.sendStatus(HttpStatus.UNAUTHORIZED)
-        return
-      }
-      const userSaveData = Object.assign({}, userData, {
-        passwordHash: crypto.hashPassword(userData.password),
-        role: userData.role || 'user'
-      })
-      const user = await req.params.user.update(userData).catch(next)
-      if (!user) {
-        res.sendStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-        return
-      }
-      res.send(rowToUser(user))
-    }],
+    ],
 
     /**
      * Delete user with id = userId.
      */
-    'DELETE /users/:userId': [loadUser, checkAccess([SELF, MANAGER, ADMIN]), async (req, res, next) => {
-      if (req.user.id === req.params.user.id) {
-        res.sendStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-        return
+    'DELETE /users/:userId': [
+      loadUser,
+      checkAccess(DELETE_USER),
+      async (req, res, next) => {
+        console.log(req.user, req.params.user)
+        if (req.user.id === req.params.user.id) {
+          sendDeleteSelfError(res)
+          return
+        }
+        const copy = Object.assign({}, req.params.user)
+        await req.params.user.destroy()
+        sendUser(res, copy)
       }
-      await db.models.Trip.destroy({ where: { userId: req.params.user.id } }).catch(next)
-      await req.params.user.destroy().catch(next)
-      res.sendStatus(HttpStatus.OK)
-    }]
+    ]
   }
 }

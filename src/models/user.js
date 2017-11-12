@@ -1,28 +1,49 @@
 const Sequelize = require('sequelize')
+const crypto = require('../crypto')
 
 module.exports = sequelize => {
-  return sequelize.define('user', {
-    name: {
-      type: Sequelize.STRING
-    },
+
+  const User = sequelize.define('user', {
     username: {
       type: Sequelize.STRING,
       unique: true,
-      required: true
+      validate: {
+        validUsername(value) {
+          if (!value || !(0 < value.length && value.length <= 100)) {
+            throw new Error('Invalid username: it should be non-empty, and no longer than 100 characters.')
+          }
+        }
+      }
     },
-    email: {
+    password: {
       type: Sequelize.STRING,
-      unique: true,
-      required: true
-    },
-    passwordHash: {
-      type: Sequelize.STRING,
-      required: true
+      validate: {
+        validPassword(value) {
+          if (!value || !(0 < value.length && value.length <= 100)) {
+            throw new Error('Invalid password: it should be non-empty, and no longer than 100 characters.')
+          }
+        }
+      }
     },
     role: {
       type: Sequelize.ENUM,
       values: ['user', 'manager', 'admin'],
-      required: true
+      validate: {
+        validRole(value) {
+          if (!value || !(['user', 'manager', 'admin'].includes(value))) {
+            throw new Error('Invalid role: it should be either user, manager, or admin.')
+          }
+        }
+      }
     }
   })
+
+  User.addHook('beforeSave', (user, options) => {
+    if (user.changed('password')) {
+      const hash = crypto.hashPassword(user.get('password'))
+      user.set('password', hash)
+    }
+  })
+
+  return User
 }

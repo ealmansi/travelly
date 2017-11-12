@@ -2,35 +2,47 @@ const HttpStatus = require('http-status-codes')
 const passport = require('passport')
 const basicAuth = require('basic-auth')
 const { validatePassword } = require('../../crypto')
-
+const { sendUnauthorizedError, sendForbiddenError } = require('../util/errors')
 
 module.exports = db => {
+
+  const [USER, MANAGER, ADMIN] = db.models.User.rawAttributes.role.values
 
   let self
 
   return self = {
 
     accessTypes: {
-      USER: 'USER',         // Authenticated user, all resources.
-      MANAGER: 'MANAGER',   // Authenticated manager, all resources.
-      ADMIN: 'ADMIN',       // Authenticated admin, all resources.
-      SELF: 'SELF',         // Authenticated user, own record.
-      OWNER: 'OWNER'        // Authenticated user, owned records.
+      LOG_IN: 'LOG_IN',
+      LIST_USERS: 'LIST_USERS',
+      VIEW_USER: 'VIEW_USER',
+      CREATE_USER: 'CREATE_USER',
+      EDIT_USER: 'EDIT_USER',
+      DELETE_USER: 'DELETE_USER',
+      LIST_TRIPS: 'LIST_TRIPS',
+      VIEW_TRIP: 'VIEW_TRIP',
+      CREATE_TRIP: 'CREATE_TRIP',
+      EDIT_TRIP: 'EDIT_TRIP',
+      DELETE_TRIP: 'DELETE_TRIP',
+      LIST_USER_TRIPS: 'LIST_USER_TRIPS',
+      VIEW_USER_TRIP: 'VIEW_USER_TRIP',
+      CREATE_USER_TRIP: 'CREATE_USER_TRIP',
+      EDIT_USER_TRIP: 'EDIT_USER_TRIP',
+      DELETE_USER_TRIP: 'DELETE_USER_TRIP'
     },
 
-    checkAccess: accessSpecs => async (req, res, next) => {
-      try {
-        const user = await self.getAuthenticatedUser(req)
-        if (!user || !self.satisfiesSpecs(user, accessSpecs, req)) {
-          res.sendStatus(HttpStatus.UNAUTHORIZED)
-          return
-        }
-        req.user = user
-        next()
+    checkAccess: accessType => async (req, res, next) => {
+      const user = await self.getAuthenticatedUser(req)
+      if (!user) {
+        sendUnauthorizedError(res)
+        return
       }
-      catch (err) {
-        next(err)
+      if (!self.hasAccess(user, accessType, req)) {
+        sendForbiddenError(res)
+        return
       }
+      req.user = user
+      next()
     },
 
     getAuthenticatedUser: async req => {
@@ -39,43 +51,59 @@ module.exports = db => {
         return null
       }
       const user = await db.models.User.findOne({ where: { username: credentials.name } })
-      if (!user || !validatePassword(credentials.pass, user.passwordHash)) {
+      if (!user || !validatePassword(credentials.pass, user.password)) {
         return null
       }
       return user
     },
 
-    satisfiesSpecs: (user, accessSpecs, req) => {
-      for (var i = 0; i < accessSpecs.length; i++) {
-        const accessSpec = accessSpecs[i]
-        switch (accessSpec) {
-        case self.accessTypes.USER:
-          return true
-        case self.accessTypes.MANAGER:
-          if (user.role === 'manager') {
-            return true
-          }
-          break
-        case self.accessTypes.ADMIN:
-          if (user.role === 'admin') {
-            return true
-          }
-          break
-        case self.accessTypes.SELF:
-          if (req.params.user && req.params.user.id === user.id) {
-            return true
-          }
-          break
-        case self.accessTypes.OWNER:
-          if (req.params.trip && req.params.trip.userId === user.id) {
-            return true
-          }
-          break
-        default:
-          throw new Error(`Unexpected access type: ${accessSpec}.`)
-        }
+    hasAccess: (user, accessType, req) => {
+      switch (accessType) {
+      case self.accessTypes.LOG_IN:
+        return true
+      case self.accessTypes.LIST_USERS:
+        return self.hasRole(user, MANAGER)
+            || self.hasRole(user, ADMIN)
+      case self.accessTypes.VIEW_USER:
+        return req.params && req.params.user && req.params.user.id === user.id
+            || self.hasRole(user, MANAGER)
+            || self.hasRole(user, ADMIN)
+      case self.accessTypes.CREATE_USER:
+        return self.hasRole(user, MANAGER) && self.hasRole(req.body, USER)
+            || self.hasRole(user, ADMIN)
+      case self.accessTypes.EDIT_USER:
+      case self.accessTypes.DELETE_USER:
+        return req.params && req.params.user && req.params.user.id === user.id
+            || self.hasRole(user, MANAGER) && self.hasRole(req.params.user, USER)
+            || self.hasRole(user, ADMIN)
+      case self.accessTypes.LIST_TRIPS:
+        return self.hasRole(user, ADMIN)
+      case self.accessTypes.VIEW_TRIP:
+        return true
+      case self.accessTypes.CREATE_TRIP:
+        return true
+      case self.accessTypes.EDIT_TRIP:
+        return true
+      case self.accessTypes.DELETE_TRIP:
+        return true
+      case self.accessTypes.LIST_USER_TRIPS:
+        return true
+      case self.accessTypes.VIEW_USER_TRIP:
+        return true
+      case self.accessTypes.CREATE_USER_TRIP:
+        return true
+      case self.accessTypes.EDIT_USER_TRIP:
+        return true
+      case self.accessTypes.DELETE_USER_TRIP:
+        return true
+      default:
+        throw new Error(`Unexpected access type: ${accessType}.`)
       }
       return false
+    },
+
+    hasRole(user, role) {
+      return user && user.role && user.role.toLowerCase() === role
     }
   }
 }
