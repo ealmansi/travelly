@@ -34,5 +34,9 @@ module.exports = ({
 
   sendDeleteSelfError: res => {
     res.status(HttpStatus.UNPROCESSABLE_ENTITY).send({ error: 'You cannot delete your own account.' })
+  },
+
+  sendInternalServerError: res => {
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ error: 'Unexpected error while processing your request.' })
   }
 })

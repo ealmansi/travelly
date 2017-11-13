@@ -87,7 +87,6 @@ module.exports = db => {
       loadUser,
       checkAccess(DELETE_USER),
       async (req, res, next) => {
-        console.log(req.user, req.params.user)
         if (req.user.id === req.params.user.id) {
           sendDeleteSelfError(res)
           return

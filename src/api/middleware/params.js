@@ -34,9 +34,16 @@ module.exports = db => {
       if (filter !== undefined) {
         const filters = JSONParse(filter).value
         if (Array.isArray(filters) && filters.length > 0) {
-          const clauses = filters.map(([attr, value]) => ({
-            [attr]: { [Op.iLike]: `%${value}%` }
-          }))
+          const clauses = filters.map(([attr, value]) => {
+            if (attr === 'role') {
+              return { role: value }
+            }
+            else {
+              return {
+                [attr]: { [Op.iLike]: `%${value}%` }
+              }
+            }
+          })
           opts.where = { [Op.and]: clauses }
         }
       }

@@ -1,13 +1,10 @@
-const HttpStatus = require('http-status-codes')
 const logger = require('./logger')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
-const passport = require('passport')
-const BasicStrategy = require('passport-http').BasicStrategy
-const crypto = require('./crypto')
 const db = require('./db')
 const api = require('./api')(db)
+const { sendInternalServerError } = require('./api/util/errors')
 
 const app = express()
 
@@ -48,24 +45,7 @@ function errorHandler(handler) {
 
 app.use(function (err, req, res, next) {
   logger.error(err)
-  res.sendStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  sendInternalServerError(res)
 })
-
-passport.use(new BasicStrategy(
-  (username, password, done) => {
-    db.models.User.findOne({ where: { username: username } })
-      .then(user => {
-        if (!user || !password || !user.passwordHash
-            || !crypto.validatePassword(password, user.passwordHash)) {
-          return done(null, false)
-        }
-        return done(null, user)
-      })
-      .catch(err => {
-        logger.error(err)
-        return done(err)
-      })
-  }
-))
 
 module.exports = app

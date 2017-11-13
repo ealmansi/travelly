@@ -56,9 +56,9 @@ module.exports = sequelize => {
     }
   })
   
-  User.hasMany(Trip)
+  User.hasMany(Trip, { onDelete: 'CASCADE' })
 
-  Trip.belongsTo(User, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' })
+  Trip.belongsTo(User, { foreignKey: { allowNull: false } })
 
   return Trip
 }
