@@ -4,7 +4,7 @@
   "description": "Travelly - Your travel companion.",
   "main": "index.js",
   "scripts": {
-    "test": "cd api && npm test && cd .. && cd web && npm test && cd .."
+    "test": "cd api && npm install && npm test && cd .. && cd web && npm install && ./node_modules/yarn/bin/yarn && npm test && cd .."
   },
   "repository": {
     "type": "git",
