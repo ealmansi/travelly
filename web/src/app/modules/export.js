@@ -21,7 +21,6 @@ function exportTripsToPdf(trips) {
   const tableBody = []
   tableBody.push(['Destination', 'Start Date', 'End Date', 'Comment'])
   trips.forEach(trip => {
-    console.log(trip)
     if (isInRange(trip.startDate, rangeStart, rangeEnd)) {
       tableBody.push([
         trip.destination,
@@ -57,7 +56,7 @@ function exportTripsToPdf(trips) {
       }
     }
   }
-  pdfMake.createPdf(docDefinition).download(`Travelly - Schedule.pdf - ${formatDate(rangeStart)}`)
+  pdfMake.createPdf(docDefinition).print()
 }
 
 function isInRange(dateStr, rangeStart, rangeEnd) {
