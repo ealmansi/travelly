@@ -12,15 +12,14 @@ const testAdmin = {
 
 const testManager = {
   username: 'someManager',
-  email: 'someManager@domain.com',
   password: 'somePassword',
   role: 'manager'
 }
 
 const testUser = {
-  username: 'someUser',
-  email: 'someUser@domain.com',
-  password: 'somePassword'
+  username: 'someUsername',
+  password: 'somePassword',
+  role: 'user'
 }
 
 describe('CRUD operations on users', () => {
@@ -56,32 +55,47 @@ describe('CRUD operations on users', () => {
     function getUsers() {
       return request(app)
       .get('/v1/users').auth(testAdmin.username, testAdmin.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.length, 1))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.length, 1)
+      })
     }
 
     function createUser() {
       return request(app)
       .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testUser)
-      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
+      .expect(HttpStatus.OK)
+      .then(response => {
+        testUserId = response.body.data.id
+      })
     }
 
     function getUser1() {
       return request(app)
       .get(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testUser.username))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.username, testUser.username)
+      })
     }
 
     function updateUser() {
-      const updatedTestUser = Object.assign({}, testUser, { name: 'someName' })
+      const updatedTestUser = Object.assign({}, testUser, { username: 'someOtherUsername' })
       return request(app)
       .put(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password).send(updatedTestUser)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.name, updatedTestUser.name))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.username, updatedTestUser.username)
+      })
     }
 
     function getUser2() {
       return request(app)
       .get(`/v1/users/${testUserId}`).auth(testAdmin.username, testAdmin.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, testUserId))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.id, testUserId)
+      })
     }
 
     function deleteUser() {
@@ -109,32 +123,47 @@ describe('CRUD operations on users', () => {
     function createManager() {
       return request(app)
       .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testManager)
-      .expect(HttpStatus.OK).then(response => testManagerId = response.body.id)
+      .expect(HttpStatus.OK)
+      .then(response => {
+        testManagerId = response.body.data.id
+      })
     }
 
     function createUser() {
       return request(app)
       .post('/v1/users').auth(testManager.username, testManager.password).send(testUser)
-      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
+      .expect(HttpStatus.OK)
+      .then(response => {
+        testUserId = response.body.data.id
+      })
     }
 
     function getUser1() {
       return request(app)
       .get(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testUser.username))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.username, testUser.username)
+      })
     }
 
     function updateUser() {
-      const updatedTestUser = Object.assign({}, testUser, { name: 'someName' })
+      const updatedTestUser = Object.assign({}, testUser, { username: 'someOtherUsername' })
       return request(app)
       .put(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password).send(updatedTestUser)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.name, updatedTestUser.name))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.username, updatedTestUser.username)
+      })
     }
 
     function getUser2() {
       return request(app)
       .get(`/v1/users/${testUserId}`).auth(testManager.username, testManager.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, testUserId))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.id, testUserId)
+      })
     }
 
     function deleteUser() {
@@ -152,6 +181,7 @@ describe('CRUD operations on users', () => {
 
   it('user should be able to retrieve and update her own data successfully', () => {
     let testUserId
+    let updatedTestUser
 
     return createUser()
     .then(getUser1).then(updateUser).then(getUser2)
@@ -159,26 +189,38 @@ describe('CRUD operations on users', () => {
     function createUser() {
       return request(app)
       .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testUser)
-      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
+      .expect(HttpStatus.OK)
+      .then(response => {
+        testUserId = response.body.data.id
+      })
     }
 
     function getUser1() {
       return request(app)
       .get(`/v1/users/${testUserId}`).auth(testUser.username, testUser.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.username, testUser.username))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.username, testUser.username)
+      })
     }
 
     function updateUser() {
-      const updatedTestUser = Object.assign({}, testUser, { name: 'someName' })
+      updatedTestUser = Object.assign({}, testUser, { username: 'someOtherUsername' })
       return request(app)
       .put(`/v1/users/${testUserId}`).auth(testUser.username, testUser.password).send(updatedTestUser)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.name, updatedTestUser.name))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.username, updatedTestUser.username)
+      })
     }
 
     function getUser2() {
       return request(app)
-      .get(`/v1/users/${testUserId}`).auth(testUser.username, testUser.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, testUserId))
+      .get(`/v1/users/${testUserId}`).auth(updatedTestUser.username, updatedTestUser.password)
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.id, testUserId)
+      })
     }
   })
 })

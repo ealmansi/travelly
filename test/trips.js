@@ -11,25 +11,24 @@ const testAdmin = {
 }
 
 const adminTestTrip = {
-  destination: 'someDestinationForAdmin',
+  destination: 'some destination for admin',
   startDate: '1970/01/01',
   endDate: '1970/01/02',
-  comment: 'someCommentFromAdmin',
+  comment: 'some comment from admin',
   userId: 1
 }
 
 const testUser = {
-  username: 'someUser',
-  email: 'someUser@domain.com',
+  username: 'someUsername',
   password: 'somePassword',
   role: 'user'
 }
 
 const userTestTrip = {
-  destination: 'someDestinationForUser',
+  destination: 'some destination for user',
   startDate: '1970/01/01',
   endDate: '1970/01/02',
-  comment: 'someCommentFromUser'
+  comment: 'some comment from user'
 }
 
 describe('CRUD operations on trips', () => {
@@ -59,39 +58,55 @@ describe('CRUD operations on trips', () => {
 
     return getTrips()
     .then(createTrip).then(getTrip1)
-    .then(updateTrip).then(getTrip2)
-    .then(deleteTrip).then(getTrip3)
-    .then(createTrip2).then(getTrip4)
+    // .then(updateTrip).then(getTrip2)
+    // .then(deleteTrip).then(getTrip3)
+    // .then(createTrip2).then(getTrip4)
 
     function getTrips() {
       return request(app)
       .get('/v1/trips').auth(testAdmin.username, testAdmin.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.length, 0))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.length, 0)
+      })
     }
 
     function createTrip() {
       return request(app)
       .post('/v1/trips').auth(testAdmin.username, testAdmin.password).send(adminTestTrip)
-      .expect(HttpStatus.OK).then(response => adminTestTripId = response.body.id)
+      .expect(HttpStatus.OK).then(response => {
+        console.log(response.body.data)
+        adminTestTripId = response.body.data.id
+      })
     }
 
     function getTrip1() {
+      console.log(adminTestTripId)
       return request(app)
       .get(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.destination, adminTestTrip.destination))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.destination, adminTestTrip.destination)
+      })
     }
 
     function updateTrip() {
       const updatedTestTrip = Object.assign({}, adminTestTrip, { comment: 'someOtherComment' })
       return request(app)
       .put(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password).send(updatedTestTrip)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.comment, updatedTestTrip.comment))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.comment, updatedTestTrip.comment)
+      })
     }
 
     function getTrip2() {
       return request(app)
       .get(`/v1/trips/${adminTestTripId}`).auth(testAdmin.username, testAdmin.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.id, adminTestTripId))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.id, adminTestTripId)
+      })
     }
 
     function deleteTrip() {
@@ -109,13 +124,19 @@ describe('CRUD operations on trips', () => {
     function createTrip2() {
       return request(app)
       .post('/v1/users/1/trips').auth(testAdmin.username, testAdmin.password).send(adminTestTrip)
-      .expect(HttpStatus.OK).then(response => adminTestTripId = response.body.id)
+      .expect(HttpStatus.OK).then(response => {
+        console.log(response.body.data)
+        adminTestTripId = response.body.data.id
+      })
     }
 
     function getTrip4() {
       return request(app)
       .get('/v1/users/1/trips').auth(testAdmin.username, testAdmin.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.length, 1))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.length, 1)
+      })
     }
   })
 
@@ -129,27 +150,39 @@ describe('CRUD operations on trips', () => {
     function createUser() {
       return request(app)
       .post('/v1/users').auth(testAdmin.username, testAdmin.password).send(testUser)
-      .expect(HttpStatus.OK).then(response => testUserId = response.body.id)
+      .expect(HttpStatus.OK).then(response => {
+        console.log(response.body.data)
+        testUserId = response.body.data.id
+      })
       .then(() => userTestTrip.userId = testUserId)
     }
 
     function createTrip() {
       return request(app)
       .post(`/v1/users/${testUserId}/trips`).auth(testUser.username, testUser.password).send(userTestTrip)
-      .expect(HttpStatus.OK).then(response => userTestTripId = response.body.id)
+      .expect(HttpStatus.OK).then(response => {
+        console.log(response.body.data)
+        userTestTripId = response.body.data.id
+      })
     }
 
     function getTrip1() {
       return request(app)
       .get(`/v1/users/${testUserId}/trips/${userTestTripId}`).auth(testUser.username, testUser.password)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.destination, userTestTrip.destination))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.destination, userTestTrip.destination)
+      })
     }
 
     function updateTrip() {
       const updatedTestTrip = Object.assign({}, userTestTrip, { comment: 'someOtherComment' })
       return request(app)
       .put(`/v1/trips/${userTestTripId}`).auth(testUser.username, testUser.password).send(updatedTestTrip)
-      .expect(HttpStatus.OK).then(response => assert.equal(response.body.comment, updatedTestTrip.comment))
+      .expect(HttpStatus.OK)
+      .then(response => {
+        assert.equal(response.body.data.comment, updatedTestTrip.comment)
+      })
     }
 
     function deleteTrip() {

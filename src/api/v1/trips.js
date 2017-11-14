@@ -1,10 +1,10 @@
 
 module.exports = db => {
   
+  const { parseListOpts } = require('../util/params')(db)
   const { sendTripsList, sendTrip } = require('../util/response')
   const { catchError, sendValidationError } = require('../util/errors')
   const { loadUser, loadTrip } = require('../middleware/db')(db)
-  const { getListOptions } = require('../middleware/params')(db)
   const { checkAccess, accessTypes } = require('../middleware/auth')(db)
   const { LIST_TRIPS, VIEW_TRIP, CREATE_TRIP, EDIT_TRIP, DELETE_TRIP } = accessTypes
   const { LIST_USER_TRIPS, VIEW_USER_TRIP, CREATE_USER_TRIP, EDIT_USER_TRIP, DELETE_USER_TRIP } = accessTypes
@@ -16,10 +16,13 @@ module.exports = db => {
      */
     'GET /trips': [
       checkAccess(LIST_TRIPS),
-      getListOptions,
       async (req, res, next) => {
-        const opts = req.list.opts
-        const result = await db.models.Trip.findAndCountAll(opts)
+        const opts = parseListOpts(req)
+        const { result, error } = await catchError(db.models.Trip.findAndCountAll(opts))
+        if (error) {
+          sendBadRequestError(res)
+          return
+        }
         sendTripsList(res, result.rows, opts.offset, opts.limit, result.count)
       }
     ],
@@ -86,15 +89,19 @@ module.exports = db => {
      */
     'GET /users/:userId/trips': [
       loadUser,
-      getListOptions,
       checkAccess(LIST_USER_TRIPS),
       async (req, res, next) => {
-        const opts = Object.assign({}, req.list.opts, {
-          where: Object.assign({}, req.list.opts.where || {}, {
+        const baseOpts = parseListOpts(req)
+        const opts = Object.assign({}, baseOpts, {
+          where: Object.assign({}, baseOpts.where || {}, {
             userId: req.params.user.id
           })
         })
-        const result = await db.models.Trip.findAndCountAll(opts)
+        const { result, error } = await catchError(db.models.Trip.findAndCountAll(opts))
+        if (error) {
+          sendBadRequestError(res)
+          return
+        }
         sendTripsList(res, result.rows, opts.offset, opts.limit, result.count)
       }
     ],

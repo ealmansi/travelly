@@ -7,6 +7,7 @@ module.exports = sequelize => {
     username: {
       type: Sequelize.STRING,
       unique: true,
+      allowNull: false,
       validate: {
         validUsername(value) {
           if (!value || !(0 < value.length && value.length <= 100)) {
@@ -17,6 +18,7 @@ module.exports = sequelize => {
     },
     password: {
       type: Sequelize.STRING,
+      allowNull: false,
       validate: {
         validPassword(value) {
           if (!value || !(0 < value.length && value.length <= 100)) {
@@ -28,6 +30,7 @@ module.exports = sequelize => {
     role: {
       type: Sequelize.ENUM,
       values: ['user', 'manager', 'admin'],
+      allowNull: false,
       validate: {
         validRole(value) {
           if (!value || !(['user', 'manager', 'admin'].includes(value))) {

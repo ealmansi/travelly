@@ -3,8 +3,8 @@ module.exports = db => {
 
   const Op = db.sequelize.Op
   const { sendUsersList, sendUser } = require('../util/response')
-  const { catchError, sendValidationError, sendDeleteSelfError } = require('../util/errors')
-  const { getListOptions } = require('../middleware/params')(db)
+  const { parseListOpts } = require('../util/params')(db)
+  const { catchError, sendBadRequestError, sendValidationError, sendDeleteSelfError } = require('../util/errors')
   const { loadUser } = require('../middleware/db')(db)
   const { checkAccess, accessTypes } = require('../middleware/auth')(db)
   const { LIST_USERS, VIEW_USER, CREATE_USER, EDIT_USER, DELETE_USER } = accessTypes
@@ -16,10 +16,13 @@ module.exports = db => {
      */
     'GET /users': [
       checkAccess(LIST_USERS),
-      getListOptions,
       async (req, res, next) => {
-        const opts = req.list.opts
-        const result = await db.models.User.findAndCountAll(opts)
+        const opts = parseListOpts(req)
+        const {result, error} = await catchError(db.models.User.findAndCountAll(opts))
+        if (error) {
+          sendBadRequestError(res)
+          return
+        }
         sendUsersList(res, result.rows, opts.offset, opts.limit, result.count)
       }
     ],

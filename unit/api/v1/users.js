@@ -9,8 +9,8 @@ chai.use(chaiAsPromised)
 
 const testUser = {
   username: 'someUser',
-  email: 'someUser@domain.com',
-  password: 'somePassword'
+  password: 'somePassword',
+  role: 'user'
 }
 
 describe('v1 users routes unit tests', function() {
@@ -36,21 +36,21 @@ describe('v1 users routes unit tests', function() {
     const req = { body: { } }
     const res = getMockResponseObject()
     await getHandler('GET /users')(req, res)
-    assert.deepEqual(res.response.length, 1)
-    assert.deepEqual(res.response[0].role, 'admin')
+    assert.deepEqual(res.sentResponse.data.length, 1)
+    assert.deepEqual(res.sentResponse.data[0].role, 'admin')
   })
 
   it('get :userId should return user from params', async () => {
     const req = { params: { user: testUser } }
     const res = getMockResponseObject()
     await getHandler('GET /users/:userId')(req, res)
-    assert.equal(res.response.username, testUser.username)
+    assert.equal(res.sentResponse.data.username, testUser.username)
   })
 
   it('post should create a new user', async () => {
     const req = { user: { role: 'admin' }, body: testUser }
     const res = getMockResponseObject()
     await getHandler('POST /users')(req, res)
-    assert.equal(res.response.username, testUser.username)
+    assert.equal(res.sentResponse.data.username, testUser.username)
   })
 })

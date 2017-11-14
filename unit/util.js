@@ -11,13 +11,15 @@ module.exports = api => {
     getMockResponseObject: () => {
       let self
       return self = {
-        response: null,
-        status: null,
+        sentResponse: null,
+        sentStatus: null,
         send: response => {
-          self.response = response
+          self.sentResponse = response
+          return self
         },
-        sendStatus: status => {
-          self.status = status
+        status: status => {
+          self.sentStatus = status
+          return self
         }
       }
     }

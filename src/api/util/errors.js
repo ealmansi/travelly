@@ -1,3 +1,4 @@
+const capitalize = require('capitalize')
 const HttpStatus = require('http-status-codes')
 
 module.exports = ({
@@ -18,14 +19,26 @@ module.exports = ({
 
   sendValidationError: (res, error) => {
     const messages = error && error.errors && error.errors.reduce((acc, err) => {
-      return err.type === 'Validation error' ?
-          acc.concat([err.message]) :
-          acc
+      if (err.type === 'notNull Violation') {
+        return acc.concat([`${capitalize(err.path)} cannot be empty`])
+      }
+      else if (err.type === 'Validation error') {
+        return acc.concat([err.message])
+      }
+      return acc
     }, [])
-    if (!messages) {
-      throw new Error('Unexpected validation error.')
+    if (!messages.length) {
+      throw new Error(`Unexpected validation error: ${JSON.stringify(error)}`)
     }
     res.status(HttpStatus.BAD_REQUEST).send({ error: messages.join('. ') })
+  },
+
+  sendBadRequestError: res => {
+    res.status(HttpStatus.BAD_REQUEST).send({ error: 'Request is invalid.' })
+  },
+
+  sendNotFoundError: res => {
+    res.status(HttpStatus.NOT_FOUND).send({ error: 'The intended record was not found.' })
   },
 
   sendUserExistsError: res => {

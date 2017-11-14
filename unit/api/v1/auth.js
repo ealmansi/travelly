@@ -35,25 +35,17 @@ describe('auth routes unit tests', function() {
 
   it('signup request should fail on invalid input', async () => {
     const req = { body: { } }
-    const res = {
-      sendStatus: status => {
-        expect(status).to.equal(HttpStatus.BAD_REQUEST)
-      }
-    }
+    const res = getMockResponseObject()
     await getHandler('POST /auth/signup')(req, res)
+    expect(res.sentStatus).to.equal(HttpStatus.BAD_REQUEST)
   })
   
   it('signup request should succed on valid input', async () => {
     const req = { body: testUser }
-    const res = {
-      send: user => {
-        expect(user.username).to.equal(testUser.username)
-        db.models.User.find({ where: { username: testUser.username } })
-          .then(user => {
-            expect(user).to.not.be.undefined
-          })
-      }
-    }
+    const res = getMockResponseObject()
     await getHandler('POST /auth/signup')(req, res)
+    expect(res.sentResponse.data.username).to.equal(testUser.username)
+    const user = await db.models.User.find({ where: { username: testUser.username } })
+    expect(user).to.not.be.undefined
   })
 })

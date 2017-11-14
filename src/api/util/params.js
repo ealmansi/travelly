@@ -4,20 +4,7 @@ module.exports = db => {
 
   const Op = db.sequelize.Op
 
-  let self
-
-  return self = {
-
-    getListOptions : (req, res, next) => {
-      const opts = self.parseListOpts(req)
-      if (opts === null) {
-        res.sendStatus(HttpStatus.BAD_REQUEST)
-        return
-      }
-      req.list = { opts }
-      next()
-    },
-
+  return {
     parseListOpts: req => {
       const opts = {}
       if (!req.query) {

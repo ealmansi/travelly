@@ -77,25 +77,18 @@ module.exports = db => {
             || self.hasRole(user, MANAGER) && self.hasRole(req.params.user, USER)
             || self.hasRole(user, ADMIN)
       case self.accessTypes.LIST_TRIPS:
-        return self.hasRole(user, ADMIN)
       case self.accessTypes.VIEW_TRIP:
-        return true
       case self.accessTypes.CREATE_TRIP:
-        return true
       case self.accessTypes.EDIT_TRIP:
-        return true
       case self.accessTypes.DELETE_TRIP:
-        return true
+        return self.hasRole(user, ADMIN)
       case self.accessTypes.LIST_USER_TRIPS:
-        return true
       case self.accessTypes.VIEW_USER_TRIP:
-        return true
       case self.accessTypes.CREATE_USER_TRIP:
-        return true
       case self.accessTypes.EDIT_USER_TRIP:
-        return true
       case self.accessTypes.DELETE_USER_TRIP:
-        return true
+        return req.params && req.params.user && req.params.user.id === user.id
+            || self.hasRole(user, ADMIN)
       default:
         throw new Error(`Unexpected access type: ${accessType}.`)
       }

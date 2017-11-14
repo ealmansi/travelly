@@ -8,6 +8,7 @@ module.exports = sequelize => {
   const Trip = sequelize.define('trip', {
     destination: {
       type: Sequelize.STRING,
+      allowNull: false,
       validate: {
         validDestination(value) {
           if (!value || !(0 < value.length && value.length <= 100)) {
@@ -18,6 +19,7 @@ module.exports = sequelize => {
     },
     startDate: {
       type: Sequelize.DATE,
+      allowNull: false,
       validate: {
         validStartDate(value) {
           if (!value) {
@@ -28,6 +30,7 @@ module.exports = sequelize => {
     },
     endDate: {
       type: Sequelize.DATE,
+      allowNull: false,
       validate: {
         validEndDate(value) {
           if (!value) {
