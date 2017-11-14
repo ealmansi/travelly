@@ -1,19 +1,25 @@
 {
   "name": "travelly",
   "version": "1.0.0",
-  "description": "Travelly - Your travel companion.",
-  "main": "index.js",
-  "scripts": {
-    "test": "cd api && npm install && npm test && cd .. && cd web && npm install && ./node_modules/yarn/bin/yarn && npm test && cd .."
-  },
+  "description": "Travelly - your friendly travel planner",
+  "private": true,
+  "keywords": [
+    "travelly",
+    "friendly",
+    "travel",
+    "planner"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ealmansi/travelly-api.git"
+    "url": "git+https://github.com/ealmansi/travelly.git"
   },
   "author": "Emilio Almansi",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ealmansi/travelly-api/issues"
+    "url": "https://github.com/ealmansi/travelly/issues"
   },
-  "homepage": "https://github.com/ealmansi/travelly-api#readme"
+  "homepage": "https://github.com/ealmansi/travelly#readme",
+  "scripts": {
+    "test": "cd api && npm install && npm test && cd .. && cd web && npm install && ./node_modules/yarn/bin/yarn && npm test && cd .."
+  }
 }

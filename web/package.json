@@ -1,7 +1,30 @@
 {
   "name": "travelly-web",
   "version": "1.0.0",
+  "description": "Travelly - your friendly travel planner",
   "private": true,
+  "keywords": [
+    "travelly",
+    "friendly",
+    "travel",
+    "planner"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ealmansi/travelly.git"
+  },
+  "author": "Emilio Almansi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ealmansi/travelly/issues"
+  },
+  "homepage": "https://github.com/ealmansi/travelly#readme",
+  "scripts": {
+    "start": "REACT_APP_API_HOST='http://localhost:3005' react-scripts start",
+    "build": "REACT_APP_API_HOST='https://travelly-api.herokuapp.com' react-scripts build",
+    "test": "CI=true react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
   "dependencies": {
     "admin-on-rest": "^1.3.2",
     "axios": "^0.17.1",
@@ -12,14 +35,6 @@
     "react-scripts": "1.0.17",
     "yarn": "^1.3.2"
   },
-  "scripts": {
-    "start": "REACT_APP_API_HOST='http://localhost:3005' react-scripts start",
-    "build": "REACT_APP_API_HOST='https://travelly-api.herokuapp.com' react-scripts build",
-    "test": "CI=true react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
-  },
-  "author": "Emilio Almansi",
-  "license": "MIT",
   "devDependencies": {
     "pdfmake": "^0.1.33"
   }
