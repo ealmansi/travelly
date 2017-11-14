@@ -18,7 +18,7 @@
   "bugs": {
     "url": "https://github.com/ealmansi/travelly/issues"
   },
-  "homepage": "https://github.com/ealmansi/travelly#readme",
+  "homepage": "https://travelly-web.5apps.com",
   "scripts": {
     "start": "REACT_APP_API_HOST='http://localhost:3005' react-scripts start",
     "build": "REACT_APP_API_HOST='https://travelly-api.herokuapp.com' react-scripts build",
