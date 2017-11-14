@@ -1,0 +1,19 @@
+{
+  "name": "travelly",
+  "version": "1.0.0",
+  "description": "Travelly - Your travel companion.",
+  "main": "index.js",
+  "scripts": {
+    "test": "cd api && npm test && cd .. && cd web && npm test && cd .."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ealmansi/travelly-api.git"
+  },
+  "author": "Emilio Almansi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ealmansi/travelly-api/issues"
+  },
+  "homepage": "https://github.com/ealmansi/travelly-api#readme"
+}
