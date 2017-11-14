@@ -83,7 +83,7 @@ class Login extends Component {
           <Card style={styles.card}>
             <CardHeader
               title="Travelly ®"
-              subtitle="Your travel companion"
+              subtitle="your friendly travel planner"
               avatar="T.png"
             />
             <form>
