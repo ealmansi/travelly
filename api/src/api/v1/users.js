@@ -94,7 +94,7 @@ module.exports = db => {
           sendDeleteSelfError(res)
           return
         }
-        const copy = Object.assign({}, req.params.user)
+        const copy = Object.assign({}, req.params.user.dataValues)
         await req.params.user.destroy()
         sendUser(res, copy)
       }

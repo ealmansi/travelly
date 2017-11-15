@@ -22,6 +22,9 @@ module.exports = ({
       if (err.type === 'notNull Violation') {
         return acc.concat([`${capitalize(err.path)} cannot be empty`])
       }
+      else if (err.type === 'unique violation') {
+        return acc.concat([`${capitalize(err.path)} is already taken`])
+      }
       else if (err.type === 'Validation error') {
         return acc.concat([err.message])
       }

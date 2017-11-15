@@ -65,15 +65,18 @@ module.exports = db => {
         return self.hasRole(user, MANAGER)
             || self.hasRole(user, ADMIN)
       case self.accessTypes.VIEW_USER:
-        return req.params && req.params.user && req.params.user.id === user.id
+        return self.isSelf(user, req.params.user)
             || self.hasRole(user, MANAGER)
             || self.hasRole(user, ADMIN)
       case self.accessTypes.CREATE_USER:
         return self.hasRole(user, MANAGER) && self.hasRole(req.body, USER)
             || self.hasRole(user, ADMIN)
       case self.accessTypes.EDIT_USER:
+        return self.isSelf(user, req.params.user) && self.hasRole(req.body, USER)
+          || self.hasRole(user, MANAGER) && self.hasRole(req.params.user, USER)
+          || self.hasRole(user, ADMIN)
       case self.accessTypes.DELETE_USER:
-        return req.params && req.params.user && req.params.user.id === user.id
+        return self.isSelf(user, req.params.user)
             || self.hasRole(user, MANAGER) && self.hasRole(req.params.user, USER)
             || self.hasRole(user, ADMIN)
       case self.accessTypes.LIST_TRIPS:
@@ -87,7 +90,7 @@ module.exports = db => {
       case self.accessTypes.CREATE_USER_TRIP:
       case self.accessTypes.EDIT_USER_TRIP:
       case self.accessTypes.DELETE_USER_TRIP:
-        return req.params && req.params.user && req.params.user.id === user.id
+        return self.isSelf(user, req.params.user)
             || self.hasRole(user, ADMIN)
       default:
         throw new Error(`Unexpected access type: ${accessType}.`)
@@ -97,6 +100,10 @@ module.exports = db => {
 
     hasRole(user, role) {
       return user && user.role && user.role.toLowerCase() === role
+    },
+
+    isSelf(user, reqParamsUser) {
+      return reqParamsUser && reqParamsUser.id === user.id
     }
   }
 }
