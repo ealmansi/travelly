@@ -1,4 +1,4 @@
-const logger = require('./logger')
+const logger = require('./util/logger')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')

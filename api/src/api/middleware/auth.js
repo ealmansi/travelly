@@ -1,7 +1,7 @@
 const HttpStatus = require('http-status-codes')
 const passport = require('passport')
 const basicAuth = require('basic-auth')
-const { validatePassword } = require('../../crypto')
+const { validatePassword } = require('../../util/crypto')
 const { sendUnauthorizedError, sendForbiddenError } = require('../util/errors')
 
 module.exports = db => {

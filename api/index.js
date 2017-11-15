@@ -1,7 +1,7 @@
 const port = process.env.PORT || 3005
 const db = require('./src/db')
 const app = require('./src/app')
-const logger = require('./src/logger')
+const logger = require('./src/util/logger')
 
 db.initialize()
   .then(() => {

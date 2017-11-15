@@ -1,6 +1,6 @@
 const { catchError, sendBadRequestError, sendNotFoundError } = require('../util/errors')
 const HttpStatus = require('http-status-codes')
-const logger = require('../../logger')
+const logger = require('../../util/logger')
 
 module.exports = db => {
 

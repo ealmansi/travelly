@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize')
-const crypto = require('../crypto')
+const crypto = require('../util/crypto')
 
 module.exports = sequelize => {
 

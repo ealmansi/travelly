@@ -10,7 +10,7 @@ module.exports = ({
   },
 
   sendUnauthorizedError: res => {
-    res.status(HttpStatus.UNAUTHORIZED).send({ error: 'Invalid username or password.' })
+    res.status(HttpStatus.UNAUTHORIZED).send({ error: 'Wrong username or password.' })
   },
 
   sendForbiddenError: res => {

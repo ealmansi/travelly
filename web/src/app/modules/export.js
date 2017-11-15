@@ -11,8 +11,8 @@ export const exportTrips = async () => {
     return
   }
   const { user, credentials } = userAndCredentials
-  const { data } = await get(`/users/${user.id}/trips`, {}, credentials)
-  exportTripsToPdf(data)
+  const { data } = await get(`/users/${user.id}/trips`, { sort: 'startDate', order: 'ASC' }, credentials)
+  exportTripsToPdf(data || [])
 }
 
 function exportTripsToPdf(trips) {

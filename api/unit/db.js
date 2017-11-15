@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize')
-const crypto = require('../src/crypto')
+const crypto = require('../src/util/crypto')
 
 const sequelize = new Sequelize('database', 'username', 'password', { 
   dialect: 'sqlite', 
@@ -20,9 +20,7 @@ const initialize = async () => {
       username: 'test_admin_username'
     },
     defaults: {
-      name: 'test_admin_name',
       username: 'test_admin_username',
-      email: 'test_admin_email',
       password: 'test_admin_password',
       role: 'admin'
     }

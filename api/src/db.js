@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize')
 const config = require('../config')
-const crypto = require('../src/crypto')
+const crypto = require('../src/util/crypto')
 
 const isProductionEnv = config.get('ENV') === 'production' 
 
@@ -18,18 +18,14 @@ const models = require('./models')(sequelize)
 let admin
 if (isProductionEnv) {
   admin = {
-    name: config.get('ADMIN_NAME'),
     username: config.get('ADMIN_USERNAME'),
-    email: config.get('ADMIN_EMAIL'),
     password: config.get('ADMIN_PASSWORD'),
     role: 'admin'
   }
 }
 else {
   admin = {
-    name: config.get('TEST_ADMIN_NAME'),
     username: config.get('TEST_ADMIN_USERNAME'),
-    email: config.get('TEST_ADMIN_EMAIL'),
     password: config.get('TEST_ADMIN_PASSWORD'),
     role: 'admin'
   }
@@ -42,9 +38,7 @@ const initialize = async () => {
       username: admin.username
     },
     defaults: {
-      name: admin.name,
       username: admin.username,
-      email: admin.email,
       password: admin.password,
       role: admin.role
     }
