@@ -58,9 +58,9 @@ describe('CRUD operations on trips', () => {
 
     return getTrips()
     .then(createTrip).then(getTrip1)
-    // .then(updateTrip).then(getTrip2)
-    // .then(deleteTrip).then(getTrip3)
-    // .then(createTrip2).then(getTrip4)
+    .then(updateTrip).then(getTrip2)
+    .then(deleteTrip).then(getTrip3)
+    .then(createTrip2).then(getTrip4)
 
     function getTrips() {
       return request(app)
