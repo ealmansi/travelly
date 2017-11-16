@@ -73,8 +73,8 @@ module.exports = db => {
             || self.hasRole(user, ADMIN)
       case self.accessTypes.EDIT_USER:
         return self.isSelf(user, req.params.user) && self.hasRole(req.body, USER)
-          || self.hasRole(user, MANAGER) && self.hasRole(req.params.user, USER)
-          || self.hasRole(user, ADMIN)
+            || self.hasRole(user, MANAGER) && self.hasRole(req.params.user, USER)
+            || self.hasRole(user, ADMIN)
       case self.accessTypes.DELETE_USER:
         return self.isSelf(user, req.params.user)
             || self.hasRole(user, MANAGER) && self.hasRole(req.params.user, USER)
