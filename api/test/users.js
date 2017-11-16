@@ -116,7 +116,7 @@ describe('CRUD operations on users', () => {
     let testUserId
 
     return createManager()
-   .then(createUser).then(getUser1)
+    .then(createUser).then(getUser1)
     .then(updateUser).then(getUser2)
     .then(deleteUser).then(getUser3)
 
